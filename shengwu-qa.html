@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生物合格考 · 基础闯关</title>
+<style>
+:root {
+  --bg:       #f7f6f3;
+  --card:     #ffffff;
+  --border:   #e6e3dd;
+  --text:     #5b5956;
+  --text-dim: #9a9792;
+  --correct-bg: #eef3ed;
+  --correct-fg: #6b8b6b;
+  --wrong-bg:   #f5eeea;
+  --wrong-fg:   #b59380;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+}
+
+.wrap {
+  max-width: 640px;
+  width: 100%;
+  padding: 24px 20px 40px;
+}
+
+/* ---- header ---- */
+.header {
+  text-align: center;
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: .02em;
+}
+.header .sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 5px;
+  letter-spacing: .03em;
+}
+
+/* ---- stats row ---- */
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+  margin-bottom: 20px;
+}
+.stat { text-align: center; }
+.stat .num {
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.stat .lbl {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: .05em;
+  margin-top: 2px;
+}
+
+/* ---- progress ---- */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.progress-bar {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--correct-fg);
+  border-radius: 1px;
+  transition: width .4s ease;
+}
+.progress-num {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  min-width: 38px;
+  text-align: right;
+}
+
+/* ---- card ---- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 20px;
+  margin-bottom: 14px;
+}
+.card .tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  margin-bottom: 12px;
+  letter-spacing: .04em;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.card .idx {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.card .stem {
+  font-size: 17px;
+  line-height: 1.8;
+  color: var(--text);
+  font-weight: 450;
+}
+
+/* ---- options ---- */
+.options {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.opt {
+  width: 100%;
+  padding: 15px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--text);
+  text-align: left;
+  font-family: inherit;
+  transition: background .12s, border-color .12s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.opt:active { background: #f5f4f0; }
+
+.opt .letter {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: all .2s;
+}
+
+/* states */
+.opt.correct { border-color: var(--correct-fg); background: var(--correct-bg); }
+.opt.correct .letter { border-color: var(--correct-fg); background: var(--correct-fg); color: #fff; }
+.opt.wrong   { border-color: var(--wrong-fg); background: var(--wrong-bg); }
+.opt.wrong .letter   { border-color: var(--wrong-fg); background: var(--wrong-fg); color: #fff; }
+.opt.reveal  { border-color: var(--correct-fg); background: var(--correct-bg); }
+.opt.reveal .letter  { border-color: var(--correct-fg); background: var(--correct-fg); color: #fff; }
+.opt:disabled { pointer-events: none; }
+
+/* ---- feedback ---- */
+.fb {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.75;
+  margin-bottom: 14px;
+  display: none;
+}
+.fb.on { display: block; }
+.fb.ok  { background: var(--correct-bg); color: var(--correct-fg); }
+.fb.bad { background: var(--wrong-bg); color: var(--wrong-fg); }
+
+/* ---- buttons ---- */
+.btns { display: flex; gap: 10px; }
+.btn {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  letter-spacing: .02em;
+  transition: background .12s, border-color .12s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.btn:active { background: #f5f4f0; }
+.btn.primary {
+  background: var(--correct-fg);
+  color: #fff;
+  border-color: var(--correct-fg);
+}
+.btn.primary:active { opacity: .85; }
+
+/* ---- result ---- */
+.result { text-align: center; display: none; }
+.result.on { display: block; }
+
+.result .emoji { font-size: 48px; margin-bottom: 10px; }
+.result h2 { font-size: 20px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.result .detail { font-size: 14px; color: var(--text-dim); line-height: 2; margin-bottom: 20px; }
+
+.tips-card {
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.tips-card h3 { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.tips-card li { font-size: 13px; color: var(--text-dim); line-height: 2; list-style: none; }
+.tips-card li::before { content: '— '; color: var(--border); }
+
+/* ---- desktop hover (only when hover is available) ---- */
+@media (hover: hover) {
+  .opt:hover { background: #fafaf8; border-color: #d5d1c8; }
+  .btn:hover { background: #fafaf8; border-color: #d5d1c8; }
+  .btn.primary:hover { opacity: .9; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <h1>生物合格考 · 基础闯关</h1>
+    <div class="sub">上海高中 · 必修一 & 必修二</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="ok">0</div><div class="lbl">正确</div></div>
+    <div class="stat"><div class="num" id="bad">0</div><div class="lbl">错误</div></div>
+    <div class="stat"><div class="num" id="streak">0</div><div class="lbl">连对</div></div>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="bar" style="width:0%"></div></div>
+    <div class="progress-num" id="pnum">0/20</div>
+  </div>
+
+  <div id="playArea">
+    <div class="card">
+      <div class="tag" id="tag"></div>
+      <div class="idx" id="idx"></div>
+      <div class="stem" id="stem"></div>
+    </div>
+    <ul class="options" id="opts"></ul>
+    <div class="fb" id="fb"></div>
+    <div class="btns">
+      <button class="btn" id="hintBtn" onclick="doHint()">提示</button>
+      <button class="btn primary" id="nextBtn" onclick="doNext()" style="display:none">下一题</button>
+    </div>
+  </div>
+
+  <div class="result" id="resultArea">
+    <div class="emoji" id="remj"></div>
+    <h2 id="rtitle"></h2>
+    <div class="detail" id="rdetail"></div>
+    <div class="tips-card" id="rtips"></div>
+    <button class="btn primary" onclick="restart()" style="width:100%">再来一轮</button>
+  </div>
+</div>
+
+<script>
+// ==============================  题库 (60题)  ==============================
+const Q = [
+  // ========== 必修一：细胞的分子组成 ==========
+  { b:1, c:'细胞的分子组成', q:'蛋白质的基本组成单位是？', o:['葡萄糖','氨基酸','核苷酸','脂肪酸'], a:1,
+    h:'蛋白质是由氨基酸通过肽键连接而成的多肽链。', e:'氨基酸是蛋白质的基本单位，约20种，通过肽键连接形成多肽，再盘曲折叠成蛋白质。' },
+  { b:1, c:'细胞的分子组成', q:'DNA和RNA共有的碱基是？', o:['A、T、C','A、G、C','A、T、G','T、G、C'], a:1,
+    h:'DNA含A/T/G/C，RNA含A/U/G/C。', e:'两者共有的碱基是腺嘌呤(A)、鸟嘌呤(G)、胞嘧啶(C)。DNA特有胸腺嘧啶(T)，RNA特有尿嘧啶(U)。' },
+  { b:1, c:'细胞的分子组成', q:'下列哪项不属于糖类？', o:['葡萄糖','蔗糖','胆固醇','淀粉'], a:2,
+    h:'胆固醇属于脂质中的固醇类。', e:'葡萄糖是单糖，蔗糖是二糖，淀粉是多糖。胆固醇属于脂质中的固醇类物质。' },
+  { b:1, c:'细胞的分子组成', q:'水在细胞中最重要的作用是？', o:['提供能量','作为溶剂','构成细胞膜','储存遗传信息'], a:1,
+    h:'细胞内的化学反应几乎都在水环境中进行。', e:'水是极性分子，是良好的溶剂，细胞内绝大多数化学反应都在水溶液中进行。' },
+  { b:1, c:'细胞的分子组成', q:'核酸的基本组成单位是？', o:['氨基酸','葡萄糖','核苷酸','脂肪酸'], a:2,
+    h:'核酸是由核苷酸聚合而成的长链。', e:'核苷酸是核酸的基本单位，每个核苷酸由一分子磷酸、一分子五碳糖和一分子含氮碱基组成。' },
+  { b:1, c:'细胞的分子组成', q:'脂质在细胞中不具有的功能是？', o:['储存能量','构成生物膜','催化化学反应','保温缓冲'], a:2,
+    h:'催化功能是蛋白质（酶）的典型功能。', e:'脂质能储存能量（脂肪）、构成生物膜（磷脂）、保温和缓冲。催化是酶（蛋白质）的功能。' },
+  { b:1, c:'细胞的分子组成', q:'DNA与RNA在化学组成上的区别是？', o:['碱基完全不同','五碳糖不同','都不含磷','都由氨基酸组成'], a:1,
+    h:'DNA含脱氧核糖，RNA含核糖。', e:'DNA的五碳糖是脱氧核糖，RNA是核糖。此外DNA含T而RNA含U。两者都含磷，都由核苷酸组成。' },
+  { b:1, c:'细胞的分子组成', q:'组成糖原的基本单位是？', o:['蔗糖','葡萄糖','果糖','麦芽糖'], a:1,
+    h:'糖原是多糖，由许多单糖分子脱水缩合而成。', e:'糖原（动物淀粉）是多糖，基本单位是葡萄糖。糖原主要储存在肝脏和肌肉中。' },
+
+  // ========== 必修一：细胞的结构 ==========
+  { b:1, c:'细胞的结构', q:'细胞膜的基本骨架是？', o:['蛋白质','糖类','磷脂双分子层','核酸'], a:2,
+    h:'细胞膜的主要成分是磷脂和蛋白质。', e:'磷脂双分子层是细胞膜的基本骨架，磷脂亲水头部朝外、疏水尾部朝内，蛋白质镶嵌或贯穿其中。' },
+  { b:1, c:'细胞的结构', q:'原核细胞与真核细胞最主要的区别是？', o:['有无细胞壁','有无细胞膜','有无以核膜为界限的细胞核','有无核糖体'], a:2,
+    h:'原核细胞没有成形的细胞核。', e:'原核细胞无核膜包被的细胞核，遗传物质集中在拟核。细菌、蓝藻是原核生物。' },
+  { b:1, c:'细胞的结构', q:'被称为"动力工厂"的细胞器是？', o:['核糖体','高尔基体','线粒体','内质网'], a:2,
+    h:'该细胞器是有氧呼吸的主要场所。', e:'线粒体是有氧呼吸主要场所，将有机物中化学能转化为ATP中的化学能，故称为"动力工厂"。' },
+  { b:1, c:'细胞的结构', q:'植物细胞特有的细胞器是？', o:['线粒体','叶绿体','核糖体','内质网'], a:1,
+    h:'该细胞器是光合作用的场所。', e:'叶绿体是植物细胞特有的细胞器，是光合作用的场所。线粒体、核糖体、内质网在动植物细胞中均有。' },
+  { b:1, c:'细胞的结构', q:'下列哪种细胞器没有膜结构？', o:['内质网','高尔基体','核糖体','溶酶体'], a:2,
+    h:'该细胞器由rRNA和蛋白质组成。', e:'核糖体无膜结构，由rRNA和蛋白质组成。中心体也是无膜细胞器。其余三者均有单层膜结构。' },
+  { b:1, c:'细胞的结构', q:'分泌蛋白的合成和分泌路径是？', o:['核糖体→内质网→高尔基体→细胞膜','核糖体→高尔基体→内质网→细胞膜','内质网→核糖体→高尔基体→细胞膜','高尔基体→内质网→核糖体→细胞膜'], a:0,
+    h:'核糖体合成肽链后进入内质网加工，再经高尔基体包装。', e:'路径：核糖体（合成）→内质网（加工）→高尔基体（分类包装）→囊泡→细胞膜（分泌）。' },
+
+  // ========== 必修一：细胞的代谢 ==========
+  { b:1, c:'细胞的代谢', q:'酶催化反应的原理是？', o:['提高反应物的能量','降低反应的活化能','改变反应的平衡点','提供反应所需的能量'], a:1,
+    h:'酶不改变反应的方向和平衡，只是让反应更容易发生。', e:'酶通过降低化学反应的活化能来加速反应。酶不改变反应平衡点，自身在反应前后不变。' },
+  { b:1, c:'细胞的代谢', q:'ATP的全称是？', o:['腺嘌呤','腺苷三磷酸','三磷酸腺苷','脱氧核苷酸'], a:1,
+    h:'A=腺苷，T=三，P=磷酸。', e:'ATP全称腺苷三磷酸（Adenosine Triphosphate），结构简式A-P~P~P，是细胞内的直接能源物质。' },
+  { b:1, c:'细胞的代谢', q:'光合作用释放的O₂来自哪种物质的分解？', o:['CO₂','H₂O','C₆H₁₂O₆','ATP'], a:1,
+    h:'光反应中水在光的作用下分解产生氧气。', e:'光合作用释放的氧气全部来自水的光解。光反应阶段：水分解产生O₂、[H]和ATP。' },
+  { b:1, c:'细胞的代谢', q:'有氧呼吸产生ATP最多的阶段是？', o:['第一阶段（糖酵解）','第二阶段（柠檬酸循环）','第三阶段（电子传递链）','三个阶段一样多'], a:2,
+    h:'第三阶段发生在线粒体内膜上。', e:'第三阶段（电子传递链）产生约34个ATP。一分子葡萄糖彻底氧化共产生约38个ATP。' },
+  { b:1, c:'细胞的代谢', q:'光合作用暗反应的场所是？', o:['类囊体薄膜','叶绿体基质','线粒体基质','细胞质基质'], a:1,
+    h:'暗反应不需要光，但需要多种酶参与。', e:'暗反应（卡尔文循环）在叶绿体基质中进行，利用光反应产生的ATP和[H]将CO₂还原为糖类。' },
+  { b:1, c:'细胞的代谢', q:'酶的特性不包括？', o:['高效性','专一性','作用条件温和','反应后自身被消耗'], a:3,
+    h:'酶是催化剂，反应前后自身不发生变化。', e:'酶的特性：高效性、专一性、作用条件温和。酶作为催化剂在反应前后不被消耗。' },
+  { b:1, c:'细胞的代谢', q:'有氧呼吸第一阶段（糖酵解）的场所是？', o:['线粒体基质','线粒体内膜','细胞质基质','叶绿体'], a:2,
+    h:'葡萄糖分解成丙酮酸的过程发生在细胞质中。', e:'糖酵解在细胞质基质中进行，葡萄糖分解为丙酮酸，产生少量ATP和[H]。后两个阶段在线粒体中。' },
+  { b:1, c:'细胞的代谢', q:'光合作用的光反应阶段产生什么？', o:['葡萄糖','CO₂和水','ATP和[H]','丙酮酸'], a:2,
+    h:'光反应将光能转化为化学能储存在ATP和[H]中。', e:'光反应产生ATP、[H]（NADPH）和O₂。ATP和[H]供给暗反应还原CO₂合成有机物。' },
+
+  // ========== 必修一：细胞的增殖 ==========
+  { b:1, c:'细胞的增殖', q:'细胞周期中DNA复制发生在？', o:['G₁期','S期','G₂期','M期'], a:1,
+    h:'S代表Synthesis（合成），是DNA合成的时期。', e:'DNA复制发生在分裂间期的S期。G₁期合成RNA和蛋白质，G₂期为分裂做准备，M期为分裂期。' },
+  { b:1, c:'细胞的增殖', q:'有丝分裂后期染色体数目加倍的原因是？', o:['DNA复制','着丝粒分裂','细胞质分裂','纺锤体形成'], a:1,
+    h:'后期着丝粒一分为二，姐妹染色单体分开。', e:'有丝分裂后期着丝粒分裂，姐妹染色单体分开成为两条子染色体，染色体数目暂时加倍（2N→4N）。' },
+  { b:1, c:'细胞的增殖', q:'有丝分裂过程中消失又重现的结构是？', o:['染色体和纺锤体','核膜和核仁','着丝粒','中心体'], a:1,
+    h:'前期核膜核仁消失，末期核膜核仁重新出现。', e:'前期核膜解体、核仁消失；末期核膜、核仁重新出现。染色体在前期出现、末期解螺旋。' },
+  { b:1, c:'细胞的增殖', q:'动物细胞和植物细胞有丝分裂的区别主要在？', o:['前期和中期','后期','末期细胞质分裂方式','间期'], a:2,
+    h:'植物细胞在赤道板位置形成细胞板，动物细胞细胞膜向内凹陷。', e:'动物细胞末期细胞膜从中部向内凹陷缢裂；植物细胞在赤道板处形成细胞板，进而形成新的细胞壁。' },
+
+  // ========== 必修一：细胞的分化、衰老和凋亡 ==========
+  { b:1, c:'细胞的分化', q:'细胞分化的实质是？', o:['遗传物质改变','基因的选择性表达','细胞失去全能性','染色体数目变化'], a:1,
+    h:'同一生物体的体细胞含相同的遗传信息，但不同细胞表达的基因不同。', e:'细胞分化的实质是基因的选择性表达，不同细胞选择性表达不同基因，从而产生形态和功能的差异。遗传物质不变。' },
+  { b:1, c:'细胞的分化', q:'关于细胞全能性，说法正确的是？', o:['所有细胞都有全能性','受精卵的全能性最高','分化程度越高全能性越高','动物细胞全能性高于植物'], a:1,
+    h:'受精卵能发育成完整个体，全能性最高。', e:'受精卵的全能性最高。一般来说分化程度越高全能性越低，植物细胞全能性高于动物体细胞。' },
+  { b:1, c:'细胞的衰老', q:'下列关于细胞凋亡的说法，正确的是？', o:['凋亡就是细胞坏死','凋亡是由基因控制的程序性死亡','凋亡对生物体总是有害的','凋亡只发生在病变细胞中'], a:1,
+    h:'细胞凋亡是细胞主动的、有序的死亡过程。', e:'细胞凋亡是由基因控制的程序性死亡（编程性死亡），对生物体正常发育和稳态维持有重要意义。坏死是意外的细胞死亡。' },
+
+  // ========== 必修二：遗传的细胞基础 ==========
+  { b:2, c:'遗传的细胞基础', q:'减数分裂与有丝分裂的主要区别是？', o:['有无DNA复制','有无纺锤体','染色体复制一次而细胞分裂两次','有无着丝粒分裂'], a:2,
+    h:'减数分裂的结果是子细胞染色体数目减半。', e:'减数分裂染色体复制一次，细胞连续分裂两次，子细胞染色体数目减半。有丝分裂复制一次、分裂一次。' },
+  { b:2, c:'遗传的细胞基础', q:'减数第一次分裂后期发生的重要事件是？', o:['着丝粒分裂','同源染色体分离','DNA复制','细胞质分裂'], a:1,
+    h:'减Ⅰ后期是同源染色体分开的时期。', e:'减Ⅰ后期同源染色体分离，分别移向两极。着丝粒分裂发生在减Ⅱ后期。' },
+  { b:2, c:'遗传的细胞基础', q:'精子形成过程中，一个精原细胞最终产生几个精子？', o:['1个','2个','4个','8个'], a:2,
+    h:'减数分裂的结果：一个精原细胞经过两次分裂形成4个精细胞。', e:'一个精原细胞经减数分裂产生4个精子（精细胞经变形成为精子）。一个卵原细胞只产生1个卵细胞和3个极体。' },
+  { b:2, c:'遗传的细胞基础', q:'减数分裂中同源染色体联会发生在？', o:['间期','减Ⅰ前期','减Ⅰ中期','减Ⅱ前期'], a:1,
+    h:'联会是指同源染色体两两配对的现象。', e:'减数第一次分裂前期，同源染色体两两配对（联会），形成四分体。此时可能发生交叉互换。' },
+
+  // ========== 必修二：遗传的分子基础 ==========
+  { b:2, c:'遗传的分子基础', q:'DNA复制的方式是？', o:['全保留复制','半保留复制','分散复制','随机复制'], a:1,
+    h:'每条子代DNA分子含一条旧链和一条新链。', e:'DNA半保留复制：每条子代DNA双链中一条来自亲代（模板链），另一条是新合成的。由Meselson-Stahl实验证实。' },
+  { b:2, c:'遗传的分子基础', q:'转录过程中合成RNA的模板是？', o:['DNA两条链同时','DNA的一条链','蛋白质','自身RNA'], a:1,
+    h:'转录是以DNA为模板合成RNA的过程。', e:'转录以DNA的一条链（模板链）为模板，按碱基互补配对（A-U、T-A、G-C、C-G）合成RNA。' },
+  { b:2, c:'遗传的分子基础', q:'翻译发生的场所是？', o:['细胞核','线粒体','核糖体','高尔基体'], a:2,
+    h:'翻译是合成蛋白质的过程。', e:'翻译在核糖体上进行，mRNA携带遗传信息，tRNA携带氨基酸按密码子顺序合成多肽链。' },
+  { b:2, c:'遗传的分子基础', q:'一个密码子由几个碱基组成？', o:['1个','2个','3个','4个'], a:2,
+    h:'密码子是mRNA上决定一个氨基酸的三个相邻碱基。', e:'密码子是mRNA上每三个相邻碱基，共64种（61种编码氨基酸，3种终止密码子UAA/UAG/UGA）。' },
+  { b:2, c:'遗传的分子基础', q:'DNA分子的空间结构是？', o:['单螺旋','双螺旋','三螺旋','平面结构'], a:1,
+    h:'由Watson和Crick提出。', e:'DNA分子是反向平行的双螺旋结构，外侧由磷酸和脱氧核糖交替连接构成骨架，内侧碱基按A-T、G-C配对。' },
+  { b:2, c:'遗传的分子基础', q:'中心法则描述的是？', o:['细胞分裂的过程','遗传信息传递的过程','蛋白质合成后的运输','酶的催化机制'], a:1,
+    h:'中心法则描述了DNA→RNA→蛋白质的信息流向。', e:'中心法则描述遗传信息从DNA传递到RNA（转录），再从RNA传递到蛋白质（翻译），以及DNA的自我复制。' },
+
+  // ========== 必修二：遗传的基本规律 ==========
+  { b:2, c:'遗传的基本规律', q:'基因分离定律的实质是？', o:['同源染色体分离','等位基因随同源染色体分开而分离','非同源染色体自由组合','姐妹染色单体分离'], a:1,
+    h:'分离定律与减数分裂中同源染色体的行为有关。', e:'分离定律：减数分裂中，等位基因随同源染色体的分开而分离，分别进入不同配子。' },
+  { b:2, c:'遗传的基本规律', q:'测交实验用来检测？', o:['显性性状','隐性性状','待测个体是纯合子还是杂合子','染色体数目'], a:2,
+    h:'测交是将待测个体与隐性纯合子杂交。', e:'测交（与隐性纯合子杂交）可根据后代的表现型比例推断待测个体基因型，判断纯合子还是杂合子。' },
+  { b:2, c:'遗传的基本规律', q:'自由组合定律适用于？', o:['同源染色体上的基因','非同源染色体上的非等位基因','所有基因','性染色体上的基因'], a:1,
+    h:'自由组合定律描述的是位于非同源染色体上的基因的遗传行为。', e:'自由组合定律：位于非同源染色体上的非等位基因在减数分裂时自由组合，互不干扰。' },
+  { b:2, c:'遗传的基本规律', q:'基因型为AaBb的个体（两对基因独立遗传）产生几种配子？', o:['1种','2种','4种','8种'], a:2,
+    h:'独立遗传即两对基因位于两对同源染色体上。', e:'两对基因独立遗传时，按自由组合定律，产生AB、Ab、aB、ab共4种配子，比例为1:1:1:1。' },
+  { b:2, c:'遗传的基本规律', q:'一对正常夫妇生了一个白化病孩子，他们再生一个患病孩子的概率是？', o:['1/2','1/4','3/4','1/8'], a:1,
+    h:'白化病是常染色体隐性遗传病，由此推断父母基因型。', e:'孩子患病（aa）→父母均为杂合子（Aa）。Aa×Aa→子代患病（aa）概率=1/4。' },
+
+  // ========== 必修二：伴性遗传 ==========
+  { b:2, c:'伴性遗传', q:'红绿色盲的遗传方式是？', o:['常染色体显性','常染色体隐性','伴X染色体隐性','伴X染色体显性'], a:2,
+    h:'色盲基因位于X染色体上，且为隐性。', e:'红绿色盲是伴X隐性遗传病，男性（XY）只要X上有致病基因即患病，女性需两个X均有致病基因才患病。' },
+  { b:2, c:'伴性遗传', q:'伴X隐性遗传的特点不包括？', o:['男性患者多于女性','交叉遗传','父亲患病则所有儿子都患病','女性患者的父亲一定患病'], a:2,
+    h:'父亲传给儿子的是Y染色体，不是X染色体。', e:'伴X隐性的特点：男患多于女患、交叉遗传（外公→女儿→外孙）、女患的父亲和儿子必患病。父亲患病不会直接传给儿子。' },
+
+  // ========== 必修二：生物的变异 ==========
+  { b:2, c:'生物的变异', q:'基因突变的主要特点不包括？', o:['不定向性','低频性','定向性','多数有害性'], a:2,
+    h:'基因突变没有固定的方向。', e:'基因突变特点：普遍性、随机性、不定向性、低频性、多数有害性。突变没有固定方向，不能说"定向突变"。' },
+  { b:2, c:'生物的变异', q:'基因重组的来源不包括？', o:['同源染色体的交叉互换','非同源染色体自由组合','DNA复制错误碱基改变','减数分裂中染色体的重组'], a:2,
+    h:'DNA复制错误属于基因突变，不是基因重组。', e:'基因重组来源：减数分裂中同源染色体的交叉互换和非同源染色体自由组合。DNA复制错误导致的碱基改变属于基因突变。' },
+  { b:2, c:'生物的变异', q:'可遗传变异的来源不包括？', o:['基因突变','基因重组','染色体变异','环境引起的性状改变'], a:3,
+    h:'环境引起的改变没有涉及遗传物质的改变。', e:'可遗传变异的三大来源：基因突变、基因重组、染色体变异。环境引起的性状改变如果没有改变遗传物质，属于不可遗传变异。' },
+  { b:2, c:'生物的变异', q:'秋水仙素诱导多倍体的原理是？', o:['促进DNA复制','抑制纺锤体形成','促进着丝粒分裂','引起基因突变'], a:1,
+    h:'多倍体是染色体数目加倍的结果。', e:'秋水仙素能抑制纺锤体的形成，使复制后的染色体不能分配到两个子细胞中，导致细胞内染色体数目加倍。' },
+
+  // ========== 必修二：生物的进化 ==========
+  { b:2, c:'生物的进化', q:'现代生物进化理论认为进化的基本单位是？', o:['个体','种群','群落','生态系统'], a:1,
+    h:'进化是群体基因频率变化的结果。', e:'种群是进化的基本单位。进化的实质是种群基因频率的改变。突变和基因重组提供原材料，自然选择决定方向。' },
+  { b:2, c:'生物的进化', q:'新物种形成的标志是？', o:['出现新性状','基因频率改变','形成生殖隔离','地理隔离形成'], a:2,
+    h:'物种之间不能相互交配或交配后不能产生可育后代。', e:'新物种形成的标志是产生生殖隔离。仅有地理隔离不一定是新物种，生殖隔离一旦形成基因交流完全中断。' },
+  { b:2, c:'生物的进化', q:'达尔文自然选择学说的核心是？', o:['用进废退','获得性遗传','适者生存不适者被淘汰','物种不变论'], a:2,
+    h:'自然选择保留了适应环境的个体。', e:'达尔文学说核心：过度繁殖→生存斗争→遗传变异→适者生存。"用进废退""获得性遗传"是拉马克学说。' },
+  { b:2, c:'生物的进化', q:'生物多样性不包括？', o:['遗传多样性','物种多样性','生态系统多样性','化学多样性'], a:3,
+    h:'生物多样性包括基因、物种和生态系统三个层次。', e:'生物多样性包括遗传（基因）多样性、物种多样性和生态系统多样性三个层次。' },
+
+  // ========== 补充基础题：必修一 ==========
+  { b:1, c:'细胞的分子组成', q:'构成细胞膜的主要脂质是？', o:['脂肪','磷脂','胆固醇','维生素D'], a:1,
+    h:'细胞膜的基本骨架是磷脂双分子层。', e:'磷脂是构成细胞膜的主要脂质，形成磷脂双分子层骨架。胆固醇也参与动物细胞膜的组成，但不是主要成分。' },
+  { b:1, c:'细胞的分子组成', q:'下列属于多糖的是？', o:['葡萄糖','蔗糖','纤维素','麦芽糖'], a:2,
+    h:'多糖由许多单糖分子聚合而成。', e:'纤维素是多糖（植物细胞壁主要成分）。葡萄糖是单糖，蔗糖和麦芽糖是二糖。常见的多糖还有糖原和淀粉。' },
+  { b:1, c:'细胞的结构', q:'细胞中面积最大的膜结构系统是？', o:['细胞膜','内质网','高尔基体','线粒体膜'], a:1,
+    h:'内质网广泛分布在细胞质中，膜面积很大。', e:'内质网是细胞内面积最大的膜结构，广泛分布在细胞质中，与核膜和外层细胞膜相连。' },
+  { b:1, c:'细胞的结构', q:'细胞学说主要建立者是？', o:['达尔文和拉马克','施莱登和施旺','沃森和克里克','孟德尔'], a:1,
+    h:'细胞学说是19世纪提出的关于生物体结构的基本理论。', e:'施莱登（植物学家）和施旺（动物学家）共同提出细胞学说：一切动植物都由细胞构成，细胞是生命活动的基本单位。' },
+  { b:1, c:'细胞的代谢', q:'无氧呼吸的产物不包括？', o:['乳酸','酒精和CO₂','水','ATP'], a:2,
+    h:'无氧呼吸不消耗O₂，有机物分解不彻底。', e:'无氧呼吸产物为乳酸（动物）或酒精+CO₂（酵母等），以及少量ATP。无氧呼吸不产生水，有氧呼吸第三阶段才产生水。' },
+  { b:1, c:'细胞的代谢', q:'下列关于ATP的叙述，正确的是？', o:['ATP在细胞中含量很多','ATP与ADP可以相互转化','ATP可永久储存能量','一个ATP有三个高能磷酸键'], a:1,
+    h:'ATP在细胞中含量很少但转化速率很快。', e:'ATP在细胞中含量很少，但与ADP快速相互转化。ATP有两个高能磷酸键（~），能量储存在高能磷酸键中。' },
+
+  // ========== 补充基础题：必修二 ==========
+  { b:2, c:'遗传的分子基础', q:'DNA复制需要的酶主要是？', o:['RNA聚合酶','DNA聚合酶','蛋白酶','淀粉酶'], a:1,
+    h:'DNA聚合酶是催化DNA合成的关键酶。', e:'DNA复制需要DNA聚合酶催化脱氧核苷酸的聚合。转录需要RNA聚合酶。' },
+  { b:2, c:'遗传的分子基础', q:'在DNA分子中，能与A（腺嘌呤）配对的碱基是？', o:['G','C','T','U'], a:2,
+    h:'A与T之间形成两个氢键。', e:'DNA中碱基配对规则：A（腺嘌呤）与T（胸腺嘧啶）配对（两个氢键），G（鸟嘌呤）与C（胞嘧啶）配对（三个氢键）。' },
+  { b:2, c:'遗传的基本规律', q:'孟德尔选用豌豆做实验的原因不包括？', o:['自花传粉闭花授粉','有易于区分的相对性状','生长周期短','花大且是单性花'], a:3,
+    h:'豌豆花是两性花（同时有雄蕊和雌蕊）。', e:'豌豆是两性花（非单性花），自花传粉、闭花授粉保证了纯合。优点还包括：相对性状明显易区分、生长周期短、子代数量多。' },
+  { b:2, c:'生物的变异', q:'下列哪项属于染色体结构变异？', o:['碱基对替换','基因中插入一个碱基','染色体片段缺失','DNA甲基化'], a:2,
+    h:'染色体结构变异涉及染色体大片段的改变。', e:'染色体结构变异包括：缺失、重复、倒位、易位。碱基对替换和插入是基因突变（分子水平），DNA甲基化是表观遗传。' },
+  { b:2, c:'生物的进化', q:'两个种群之间出现生殖隔离意味着？', o:['它们之间没有地理隔离','它们之间不能进行基因交流','它们一定是不同物种','B和C都对'], a:3,
+    h:'生殖隔离是物种形成的关键标志。', e:'生殖隔离意味着种群间不能进行基因交流，它们已经是不同的物种。有生殖隔离不一定有地理隔离（如同域物种形成）。' },
+];
+
+// 为每个题目添加序号
+Q.forEach(function(q,i){ q.id = i+1; });
+
+// ==============================  状态  ==============================
+var picked = [], pos = 0, ok = 0, bad = 0, streak = 0, best = 0, done = false;
+var TOTAL = 20;
+
+function shuf(a) {
+  var b = a.slice();
+  for (var i = b.length-1; i>0; i--) { var j = Math.floor(Math.random()*(i+1)); var t=b[i]; b[i]=b[j]; b[j]=t; }
+  return b;
+}
+
+// ==============================  渲染  ==============================
+var letters = ['A','B','C','D'];
+
+function show() {
+  if (pos >= TOTAL || pos >= picked.length) { over(); return; }
+  done = false;
+  var q = picked[pos];
+
+  document.getElementById('tag').textContent = (q.b===1?'必修一':'必修二') + ' · ' + q.c;
+  document.getElementById('idx').textContent = '第 ' + (pos+1) + ' 题 / 共 ' + Math.min(TOTAL, picked.length) + ' 题';
+  document.getElementById('stem').textContent = q.q;
+
+  var ol = document.getElementById('opts');
+  ol.innerHTML = '';
+  q.o.forEach(function(txt, i){
+    var li = document.createElement('li');
+    var bt = document.createElement('button');
+    bt.className = 'opt';
+    bt.innerHTML = '<span class="letter">'+letters[i]+'</span><span>'+txt+'</span>';
+    bt.onclick = (function(idx){ return function(){ pick(idx); }; })(i);
+    li.appendChild(bt);
+    ol.appendChild(li);
+  });
+
+  document.getElementById('fb').className = 'fb';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('hintBtn').style.display = 'inline-block';
+  bar();
+}
+
+function bar() {
+  var pct = Math.round((pos / Math.min(TOTAL, picked.length)) * 100);
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('pnum').textContent = pos + '/' + Math.min(TOTAL, picked.length);
+}
+
+function nums() {
+  document.getElementById('ok').textContent = ok;
+  document.getElementById('bad').textContent = bad;
+  document.getElementById('streak').textContent = streak;
+}
+
+// ==============================  答题  ==============================
+function pick(chosen) {
+  if (done) return;
+  done = true;
+  var q = picked[pos];
+  var right = chosen === q.a;
+  var bts = document.querySelectorAll('#opts .opt');
+
+  bts.forEach(function(b){ b.disabled = true; });
+  bts[q.a].classList.add('reveal');
+
+  var fb = document.getElementById('fb');
+
+  if (right) {
+    bts[chosen].classList.add('correct');
+    ok++; streak++;
+    if (streak > best) best = streak;
+    fb.className = 'fb ok on';
+    fb.innerHTML = '✓ 正确 — ' + q.e;
+  } else {
+    bts[chosen].classList.add('wrong');
+    bad++; streak = 0;
+    fb.className = 'fb bad on';
+    fb.innerHTML = '✗ 错误（选 '+letters[q.a]+'） — ' + q.e;
+  }
+
+  nums();
+  document.getElementById('nextBtn').style.display = 'inline-block';
+  document.getElementById('hintBtn').style.display = 'none';
+}
+
+function doHint() {
+  if (done) return;
+  var fb = document.getElementById('fb');
+  fb.className = 'fb ok on';
+  fb.innerHTML = '提示：' + picked[pos].h;
+}
+window.doHint = doHint;
+
+function doNext() {
+  pos++;
+  if (pos >= TOTAL || pos >= picked.length) { over(); } else { show(); }
+}
+window.doNext = doNext;
+
+// ==============================  结果  ==============================
+function over() {
+  document.getElementById('playArea').style.display = 'none';
+  var area = document.getElementById('resultArea');
+  area.classList.add('on');
+
+  var t = ok + bad;
+  var rate = t>0 ? Math.round(ok/t*100) : 0;
+
+  var emj, title, tips = '';
+  if (rate >= 90) {
+    emj = '🌿'; title = '非常好，合格考稳了！';
+    tips = '<li>回归课本，关注细节概念和易混淆点</li><li>适当练一些综合应用题保持手感</li>';
+  } else if (rate >= 70) {
+    emj = '🍃'; title = '不错，再巩固一下';
+    tips = '<li>用荧光笔在课本上标出做错的知识点</li><li>重点复习光合与呼吸作用过程、遗传规律计算</li><li>多画概念图帮助理解和记忆</li>';
+  } else if (rate >= 50) {
+    emj = '📝'; title = '还需要多下功夫';
+    tips = '<li>先梳理课本目录，建立知识框架</li><li>每天背5个核心概念，积少成多</li><li>重点关注：细胞结构、代谢过程、遗传分子基础</li>';
+  } else {
+    emj = '🌱'; title = '别灰心，从基础开始';
+    tips = '<li>建议先通读必修一课本，再做题目练习</li><li>每天弄懂一个章节的核心概念</li><li>多请教老师或同学，多画结构图</li><li>坚持每天学习，基础一定会好起来</li>';
+  }
+
+  document.getElementById('remj').textContent = emj;
+  document.getElementById('rtitle').textContent = title;
+  document.getElementById('rdetail').innerHTML =
+    '共答 <b>' + t + '</b> 题&ensp;·&ensp;正确 <b>' + ok + '</b> 题&ensp;·&ensp;错误 <b>' + bad + '</b> 题<br>正确率 <b>' + rate + '%</b>&ensp;·&ensp;最长连对 <b>' + best + '</b> 题';
+  document.getElementById('rtips').innerHTML = '<h3>复习建议</h3>' + tips;
+}
+
+function restart() {
+  picked = shuf(Q);
+  pos = 0; ok = 0; bad = 0; streak = 0; best = 0; done = false;
+  document.getElementById('playArea').style.display = 'block';
+  document.getElementById('resultArea').classList.remove('on');
+  nums(); show();
+}
+window.restart = restart;
+
+// ==============================  启动  ==============================
+picked = shuf(Q);
+nums(); show();
+</script>
+</body>
+</html>
