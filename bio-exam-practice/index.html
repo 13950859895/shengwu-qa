@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生物合格考刷题</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- ==================== 首页 ==================== -->
+    <div id="screen-home">
+      <div class="app-header">
+        <div class="logo">🧬</div>
+        <h1>生物合格考刷题</h1>
+        <p class="subtitle">上海高中生物合格考 · 高频单选题专项训练</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📚 选择刷题模式</div>
+        <div class="mode-grid">
+          <div class="mode-card" id="btn-bixiu1">
+            <div class="mode-icon">🔬</div>
+            <div class="mode-name">必修一专项</div>
+            <div class="mode-desc">分子与细胞<br>30道高频题</div>
+          </div>
+          <div class="mode-card" id="btn-bixiu2">
+            <div class="mode-icon">🧫</div>
+            <div class="mode-name">必修二专项</div>
+            <div class="mode-desc">遗传与进化<br>30道高频题</div>
+          </div>
+          <div class="mode-card" id="btn-mixed">
+            <div class="mode-icon">🎯</div>
+            <div class="mode-name">混合刷题</div>
+            <div class="mode-desc">必修一+必修二<br>60道随机混合</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="btn btn-secondary" id="btn-stats-nav">
+          📊 学习数据 & 错题回顾
+        </button>
+      </div>
+
+      <div class="app-footer">
+        <p>数据自动保存至本地 · 刷新不丢失</p>
+      </div>
+    </div>
+
+    <!-- ==================== 答题界面 ==================== -->
+    <div id="screen-quiz" class="hidden">
+      <div class="quiz-header">
+        <span class="quiz-title" id="quiz-title">必修一 专项刷题</span>
+        <span class="quiz-counter">
+          <span id="quiz-index">1</span> / <span id="quiz-total">30</span>
+        </span>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+      </div>
+
+      <div class="card">
+        <div class="question-text" id="quiz-question"></div>
+
+        <div class="options-list" id="quiz-options"></div>
+
+        <div class="feedback" id="quiz-feedback" style="display:none;"></div>
+        <div class="explanation" id="quiz-explanation" style="display:none;"></div>
+
+        <div class="quiz-nav">
+          <button class="btn btn-secondary" id="btn-back-home">🏠 返回首页</button>
+          <div class="nav-group">
+            <button class="btn btn-secondary" id="btn-prev">◀ 上一题</button>
+            <button class="btn btn-primary" id="btn-next">下一题 ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-footer">
+        <p>键盘快捷键：←上一题 →下一题 1234/ABCD选择答案</p>
+      </div>
+    </div>
+
+    <!-- ==================== 统计与错题界面 ==================== -->
+    <div id="screen-stats" class="hidden">
+      <div class="app-header">
+        <div class="logo">📊</div>
+        <h1>学习数据</h1>
+        <p class="subtitle">查看刷题进度与错题回顾</p>
+      </div>
+
+      <div class="stats-tabs">
+        <button class="tab-btn active" id="btn-stats-b1">必修一</button>
+        <button class="tab-btn" id="btn-stats-b2">必修二</button>
+        <button class="tab-btn" id="btn-stats-mixed">混合模式</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          📈 <span id="stats-mode-title">必修一</span> · 答题统计
+        </div>
+
+        <div class="stat-cards">
+          <div class="stat-card">
+            <span class="stat-val" id="stat-total">0</span>
+            <span class="stat-label">答题总数</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-val" id="stat-correct">0</span>
+            <span class="stat-label">答对数</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-val" id="stat-accuracy">--</span>
+            <span class="stat-label">正确率</span>
+          </div>
+        </div>
+
+        <div class="stats-actions" style="margin-bottom: 16px;">
+          <button class="btn btn-secondary" id="btn-clear-stats">🔄 重置统计</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📝 错题本</div>
+        <div class="wrong-list" id="wrong-list"></div>
+        <div class="stats-actions">
+          <button class="btn btn-primary" id="btn-review-wrong">🔄 重做错题</button>
+          <button class="btn btn-secondary" id="btn-clear-wrong">🗑 清空错题</button>
+        </div>
+      </div>
+
+      <div class="quick-actions" style="margin-bottom: 16px;">
+        <button class="btn btn-secondary" id="btn-back-home-2">🏠 返回首页</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 按顺序加载：题库 → 存储 → 应用逻辑 -->
+  <script src="js/questions-bixiu1.js"></script>
+  <script src="js/questions-bixiu2.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
